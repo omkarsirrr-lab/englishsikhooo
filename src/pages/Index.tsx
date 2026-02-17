@@ -1,11 +1,56 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { MessageCircle, Sparkles, Heart } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="text-center max-w-md space-y-8">
+        {/* Avatar */}
+        <div className="mx-auto h-20 w-20 rounded-full bg-primary flex items-center justify-center shadow-lg">
+          <span className="text-primary-foreground font-display font-extrabold text-3xl">S</span>
+        </div>
+
+        {/* Hero */}
+        <div className="space-y-3">
+          <h1 className="font-display text-4xl font-extrabold tracking-tight">
+            Meet <span className="text-primary">Sam</span> 👋
+          </h1>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            Your friendly AI buddy who helps you practice English through casual, everyday conversations.
+          </p>
+        </div>
+
+        {/* Features */}
+        <div className="space-y-3 text-left">
+          {[
+            { icon: MessageCircle, text: "Chat naturally — like texting a friend" },
+            { icon: Sparkles, text: "Get gentle corrections when you make mistakes" },
+            { icon: Heart, text: "No judgment, just encouragement and fun" },
+          ].map(({ icon: Icon, text }, i) => (
+            <div key={i} className="flex items-center gap-3 rounded-xl bg-card p-3.5 border">
+              <div className="h-9 w-9 rounded-lg bg-accent flex items-center justify-center shrink-0">
+                <Icon className="h-5 w-5 text-accent-foreground" />
+              </div>
+              <p className="text-sm font-medium">{text}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA */}
+        <Button
+          onClick={() => navigate("/chat")}
+          size="lg"
+          className="w-full rounded-2xl h-14 text-base font-display font-bold shadow-md hover:shadow-lg transition-shadow"
+        >
+          Start Chatting 💬
+        </Button>
+
+        <p className="text-xs text-muted-foreground">
+          No sign-up needed • Just start talking
+        </p>
       </div>
     </div>
   );
