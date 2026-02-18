@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Sparkles, Heart } from "lucide-react";
+import { MessageCircle, Sparkles, Heart, Mic } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,14 +39,25 @@ const Index = () => {
           ))}
         </div>
 
-        {/* CTA */}
-        <Button
-          onClick={() => navigate("/chat")}
-          size="lg"
-          className="w-full rounded-2xl h-14 text-base font-display font-bold shadow-md hover:shadow-lg transition-shadow"
-        >
-          Start Chatting 💬
-        </Button>
+        {/* CTAs */}
+        <div className="space-y-3">
+          <Button
+            onClick={() => navigate("/chat")}
+            size="lg"
+            className="w-full rounded-2xl h-14 text-base font-display font-bold shadow-md hover:shadow-lg transition-shadow"
+          >
+            Start Chatting 💬
+          </Button>
+          <Button
+            onClick={() => navigate("/voice")}
+            size="lg"
+            variant="outline"
+            className="w-full rounded-2xl h-14 text-base font-display font-bold"
+          >
+            <Mic className="h-5 w-5 mr-2" />
+            Voice Mode 🎙️
+          </Button>
+        </div>
 
         <p className="text-xs text-muted-foreground">
           No sign-up needed • Just start talking
