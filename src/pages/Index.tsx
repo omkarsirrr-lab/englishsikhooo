@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { MessageCircle, Sparkles, Heart, Mic } from "lucide-react";
+import samAvatar from "@/assets/sam-avatar.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -9,8 +10,8 @@ const Index = () => {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="text-center max-w-md space-y-8">
         {/* Avatar */}
-        <div className="mx-auto h-20 w-20 rounded-full bg-primary flex items-center justify-center shadow-lg">
-          <span className="text-primary-foreground font-display font-extrabold text-3xl">S</span>
+        <div className="mx-auto h-24 w-24 rounded-full overflow-hidden shadow-lg border-4 border-card">
+          <img src={samAvatar} alt="Sam" className="w-full h-full object-cover" />
         </div>
 
         {/* Hero */}

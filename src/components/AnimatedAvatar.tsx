@@ -1,14 +1,14 @@
 import { cn } from "@/lib/utils";
+import samAvatar from "@/assets/sam-avatar.jpg";
 
 type Expression = "idle" | "speaking" | "happy" | "thinking" | "encouraging";
 
 interface AnimatedAvatarProps {
   expression: Expression;
-  imageSrc?: string;
   className?: string;
 }
 
-const AnimatedAvatar = ({ expression, imageSrc, className }: AnimatedAvatarProps) => {
+const AnimatedAvatar = ({ expression, className }: AnimatedAvatarProps) => {
   const isSpeaking = expression === "speaking";
   const isHappy = expression === "happy" || expression === "encouraging";
   const isThinking = expression === "thinking";
@@ -34,18 +34,11 @@ const AnimatedAvatar = ({ expression, imageSrc, className }: AnimatedAvatarProps
           isThinking && "animate-avatar-think"
         )}
       >
-        {imageSrc ? (
-          <img
-            src={imageSrc}
-            alt="AI Companion"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          /* Placeholder avatar */
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 via-accent to-secondary flex items-center justify-center">
-            <span className="text-6xl md:text-7xl font-display font-extrabold text-primary">S</span>
-          </div>
-        )}
+        <img
+          src={samAvatar}
+          alt="Sam - AI English Companion"
+          className="w-full h-full object-cover"
+        />
 
         {/* Eye blink overlay */}
         <div className="absolute inset-0 pointer-events-none">
