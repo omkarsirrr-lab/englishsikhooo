@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send } from "lucide-react";
+import samAvatar from "@/assets/sam-avatar.jpg";
 import ChatBubble from "@/components/ChatBubble";
 import TypingIndicator from "@/components/TypingIndicator";
 import { streamChat, type Message } from "@/lib/chat";
@@ -102,8 +103,8 @@ const Chat = () => {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex items-center gap-2.5">
-          <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-display font-bold text-sm">S</span>
+          <div className="h-9 w-9 rounded-full overflow-hidden">
+            <img src={samAvatar} alt="Sam" className="w-full h-full object-cover" />
           </div>
           <div>
             <h2 className="font-display font-bold text-base leading-tight">Sam</h2>

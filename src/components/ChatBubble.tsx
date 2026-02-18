@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import samAvatar from "@/assets/sam-avatar.jpg";
 
 interface ChatBubbleProps {
   role: "user" | "assistant";
@@ -14,6 +15,7 @@ const ChatBubble = ({ role, content }: ChatBubbleProps) => {
     <div className={cn("flex gap-2.5 max-w-[85%] md:max-w-[70%]", isUser ? "ml-auto flex-row-reverse" : "mr-auto")}>
       {!isUser && (
         <Avatar className="h-8 w-8 shrink-0 mt-1">
+          <AvatarImage src={samAvatar} alt="Sam" />
           <AvatarFallback className="bg-primary text-primary-foreground font-display text-sm font-bold">
             S
           </AvatarFallback>
