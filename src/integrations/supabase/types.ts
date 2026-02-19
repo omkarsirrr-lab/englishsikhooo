@@ -14,7 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversation_sessions: {
+        Row: {
+          confidence_level: string | null
+          created_at: string
+          duration_seconds: number | null
+          fluency_feedback: string | null
+          grammar_mistakes: number | null
+          id: string
+          messages_json: Json | null
+          overall_score: number | null
+          pronunciation_issues: number | null
+          session_date: string
+          summary_json: Json | null
+          vocabulary_level: string | null
+        }
+        Insert: {
+          confidence_level?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          fluency_feedback?: string | null
+          grammar_mistakes?: number | null
+          id?: string
+          messages_json?: Json | null
+          overall_score?: number | null
+          pronunciation_issues?: number | null
+          session_date?: string
+          summary_json?: Json | null
+          vocabulary_level?: string | null
+        }
+        Update: {
+          confidence_level?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          fluency_feedback?: string | null
+          grammar_mistakes?: number | null
+          id?: string
+          messages_json?: Json | null
+          overall_score?: number | null
+          pronunciation_issues?: number | null
+          session_date?: string
+          summary_json?: Json | null
+          vocabulary_level?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

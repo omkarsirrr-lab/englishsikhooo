@@ -2,3 +2,6 @@ project_id = "ksqlcceoioyfuhxutpri"
 
 [functions.chat]
 verify_jwt = false
+
+[functions.chat-summary]
+verify_jwt = false
