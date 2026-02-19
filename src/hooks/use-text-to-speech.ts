@@ -41,16 +41,20 @@ export function useTextToSpeech(): UseTTSReturn {
       utterance.rate = 0.95;
       utterance.pitch = 1.1;
 
-      // Try to pick a female English voice
+      // Try to pick an Indian English voice first, then fall back
       const voices = window.speechSynthesis.getVoices();
-      const preferred = voices.find(
-        (v) =>
-          v.lang.startsWith("en") &&
-          (v.name.includes("Female") ||
-            v.name.includes("Samantha") ||
-            v.name.includes("Google US English") ||
-            v.name.includes("Microsoft Zira"))
-      );
+      const preferred =
+        voices.find(
+          (v) => v.lang === "en-IN"
+        ) ||
+        voices.find(
+          (v) =>
+            v.lang.startsWith("en") &&
+            (v.name.includes("Female") ||
+              v.name.includes("Samantha") ||
+              v.name.includes("Google US English") ||
+              v.name.includes("Microsoft Zira"))
+        );
       if (preferred) utterance.voice = preferred;
 
       utterance.onstart = () => setIsSpeaking(true);
