@@ -17,11 +17,12 @@ const Index = () => {
         {/* Hero */}
         <div className="space-y-3">
           <h1 className="font-display text-4xl font-extrabold tracking-tight">
-            Meet <span className="text-primary">Sam</span> 👋
+            Meet <span className="text-primary">Velloza</span> 👋
           </h1>
           <p className="text-lg text-muted-foreground leading-relaxed">
             Your friendly AI buddy who helps you practice English through casual, everyday conversations.
           </p>
+          <p className="text-sm font-medium text-primary">Made by Ranju Ma'am ❤️</p>
         </div>
 
         {/* Features */}

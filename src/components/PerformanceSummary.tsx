@@ -31,9 +31,10 @@ interface PerformanceSummaryProps {
   duration: number;
   onBack: () => void;
   onNewSession: () => void;
+  onPracticeQuestion?: (question: string) => void;
 }
 
-const PerformanceSummary = ({ summary, duration, onBack, onNewSession }: PerformanceSummaryProps) => {
+const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPracticeQuestion }: PerformanceSummaryProps) => {
   const minutes = Math.floor(duration / 60);
   const seconds = duration % 60;
   const scoreColor =
@@ -182,14 +183,20 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession }: Perform
           <TabsContent value="practice" className="space-y-3 mt-3">
             <Card>
               <CardHeader className="pb-2 pt-4">
-                <CardTitle className="text-sm">Practice Questions</CardTitle>
+                <CardTitle className="text-sm">Practice Questions <span className="text-xs text-muted-foreground">(tap to practice)</span></CardTitle>
               </CardHeader>
               <CardContent className="pb-3">
-                <ol className="space-y-1.5 list-decimal list-inside">
+                <ul className="space-y-1.5">
                   {summary.practice_questions.map((q, i) => (
-                    <li key={i} className="text-sm">{q}</li>
+                    <li
+                      key={i}
+                      className="text-sm cursor-pointer hover:bg-accent rounded-lg p-2 transition-colors"
+                      onClick={() => onPracticeQuestion?.(q)}
+                    >
+                      {i + 1}. {q}
+                    </li>
                   ))}
-                </ol>
+                </ul>
               </CardContent>
             </Card>
 

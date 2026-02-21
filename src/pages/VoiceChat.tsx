@@ -161,7 +161,7 @@ const VoiceChat = () => {
     }
   };
 
-  const handleNewSession = () => {
+  const handleNewSession = (topic?: string) => {
     setSummary(null);
     setMessages([]);
     messagesRef.current = [];
@@ -170,11 +170,24 @@ const VoiceChat = () => {
     setExpression("idle");
     setSessionStartTime(Date.now());
     hasGreeted.current = false;
-    // Trigger greeting
+
     setTimeout(() => {
       hasGreeted.current = true;
-      sendToAI([]);
+      if (topic) {
+        // Start with a user message about the topic so AI responds on-topic
+        const userMsg: Message = { role: "user", content: topic };
+        messagesRef.current = [userMsg];
+        setMessages([userMsg]);
+        setUserSubtitle(topic);
+        sendToAI([userMsg]);
+      } else {
+        sendToAI([]);
+      }
     }, 100);
+  };
+
+  const handlePracticeQuestion = (question: string) => {
+    handleNewSession(question);
   };
 
   // Show summary screen
@@ -185,7 +198,8 @@ const VoiceChat = () => {
         summary={summary}
         duration={duration}
         onBack={() => navigate("/")}
-        onNewSession={handleNewSession}
+        onNewSession={() => handleNewSession()}
+        onPracticeQuestion={handlePracticeQuestion}
       />
     );
   }
@@ -232,7 +246,7 @@ const VoiceChat = () => {
           <div className="w-full max-w-md space-y-3 text-center min-h-[120px]">
             {subtitle && (
               <div className="bg-buddy text-buddy-foreground rounded-2xl px-4 py-3 text-sm leading-relaxed max-h-32 overflow-y-auto">
-                <p className="font-medium text-xs text-muted-foreground mb-1">Sam</p>
+                <p className="font-medium text-xs text-muted-foreground mb-1">Velloza</p>
                 {subtitle.length > 200 ? subtitle.slice(-200) + "..." : subtitle}
               </div>
             )}
