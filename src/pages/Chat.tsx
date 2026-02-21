@@ -107,7 +107,7 @@ const Chat = () => {
             <img src={samAvatar} alt="Sam" className="w-full h-full object-cover" />
           </div>
           <div>
-            <h2 className="font-display font-bold text-base leading-tight">Sam</h2>
+            <h2 className="font-display font-bold text-base leading-tight">Velloza</h2>
             <p className="text-xs text-muted-foreground">Your English buddy</p>
           </div>
         </div>

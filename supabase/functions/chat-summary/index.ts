@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ANALYSIS_PROMPT = `You are an expert English language coach analyzing a conversation between a learner and their speaking partner Sam.
+const ANALYSIS_PROMPT = `You are an expert English language coach analyzing a conversation between a learner and their speaking partner Velloza.
 
 Analyze ONLY the user's messages for grammar, pronunciation hints (based on spelling/word usage), vocabulary, and fluency.
 
@@ -50,7 +50,7 @@ serve(async (req) => {
 
     const conversationText = messages
       .map((m: { role: string; content: string }) =>
-        `${m.role === "user" ? "User" : "Sam"}: ${m.content}`
+        `${m.role === "user" ? "User" : "Velloza"}: ${m.content}`
       )
       .join("\n");
 

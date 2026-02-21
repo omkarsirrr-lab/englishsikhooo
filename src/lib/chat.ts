@@ -24,7 +24,7 @@ export async function streamChat({
 
   if (!resp.ok) {
     if (resp.status === 429) {
-      onError("Sam is a bit busy right now. Try again in a moment! 😊");
+      onError("Velloza is a bit busy right now. Try again in a moment!");
       return;
     }
     if (resp.status === 402) {
