@@ -7,9 +7,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const ANALYSIS_PROMPT = `You are an expert English language coach analyzing a conversation between a learner and their speaking partner Velloza.
+const ANALYSIS_PROMPT = `You are an expert language coach analyzing a conversation between a learner and their speaking partner Velloza.
 
 Analyze ONLY the user's messages for grammar, pronunciation hints (based on spelling/word usage), vocabulary, and fluency.
+
+IMPORTANT: Based on the detected weaknesses, generate SMART PRACTICE SENTENCES that specifically target those issues:
+- If tense mistakes detected: provide past, present, future tense practice sentences
+- If vocabulary is weak: provide daily-use vocabulary sentences
+- If pronunciation issues: provide word repetition practice with phonetic hints
+- If sentence structure issues: provide correct sentence patterns to practice
 
 Return a JSON object with EXACTLY this structure (no markdown, no code blocks, just raw JSON):
 {
@@ -29,6 +35,15 @@ Return a JSON object with EXACTLY this structure (no markdown, no code blocks, j
   ],
   "repeated_mistakes": ["<pattern 1>", "<pattern 2>"],
   "improvement_areas": ["<area 1>", "<area 2>", "<area 3>"],
+  "smart_practice": [
+    {
+      "category": "Tenses" | "Vocabulary" | "Pronunciation" | "Sentence Structure" | "Articles" | "Prepositions",
+      "issue_detected": "<brief description of the issue>",
+      "sentences": [
+        { "practice": "<sentence to practice>", "hint": "<short tip or meaning>" }
+      ]
+    }
+  ],
   "daily_tips": ["<tip 1>", "<tip 2>", "<tip 3>"],
   "practice_questions": ["<q1>", "<q2>", "<q3>", "<q4>", "<q5>"],
   "pronunciation_words": ["<word1>", "<word2>", "<word3>", "<word4>", "<word5>"],
@@ -36,7 +51,8 @@ Return a JSON object with EXACTLY this structure (no markdown, no code blocks, j
 }
 
 Be encouraging and supportive in all feedback. Never be harsh. If the user made no mistakes, praise them and still provide practice material.
-If there are very few user messages, still provide a score and helpful practice material.`;
+If there are very few user messages, still provide a score and helpful practice material.
+Generate at least 5-10 smart practice sentences across detected weakness categories.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -44,9 +60,13 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, duration_seconds } = await req.json();
+    const { messages, duration_seconds, language = "english" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const langNote = language === "marathi" 
+      ? "\n\nNote: This conversation was in Marathi. Analyze Marathi grammar and provide practice sentences in Marathi with English translations."
+      : "";
 
     const conversationText = messages
       .map((m: { role: string; content: string }) =>
@@ -65,7 +85,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: ANALYSIS_PROMPT },
+            { role: "system", content: ANALYSIS_PROMPT + langNote },
             { role: "user", content: `Analyze this conversation:\n\n${conversationText}` },
           ],
         }),
@@ -117,7 +137,6 @@ serve(async (req) => {
       });
     } catch (dbErr) {
       console.error("DB save error:", dbErr);
-      // Don't fail the request if DB save fails
     }
 
     return new Response(JSON.stringify(summary), {
