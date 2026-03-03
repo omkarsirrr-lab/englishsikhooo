@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Star, AlertTriangle, BookOpen, Target, TrendingUp, MessageCircle } from "lucide-react";
+import SmartPractice, { type SmartPracticeCategory } from "@/components/SmartPractice";
 
 export interface SessionSummary {
   overall_score: number;
@@ -20,6 +21,7 @@ export interface SessionSummary {
   }>;
   repeated_mistakes: string[];
   improvement_areas: string[];
+  smart_practice?: SmartPracticeCategory[];
   daily_tips: string[];
   practice_questions: string[];
   pronunciation_words: string[];
@@ -95,8 +97,9 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
 
         {/* Tabs */}
         <Tabs defaultValue="corrections" className="w-full">
-          <TabsList className="w-full grid grid-cols-3">
+          <TabsList className="w-full grid grid-cols-4">
             <TabsTrigger value="corrections" className="text-xs">Corrections</TabsTrigger>
+            <TabsTrigger value="smart" className="text-xs">Smart Practice</TabsTrigger>
             <TabsTrigger value="improve" className="text-xs">Improve</TabsTrigger>
             <TabsTrigger value="practice" className="text-xs">Practice</TabsTrigger>
           </TabsList>
@@ -106,7 +109,7 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
                   <Star className="h-6 w-6 mx-auto text-yellow-500 mb-2" />
-                  <p className="text-sm font-medium">Great job! No major corrections needed! 🎉</p>
+                  <p className="text-sm font-medium">Great job! No major corrections needed!</p>
                 </CardContent>
               </Card>
             ) : (
@@ -114,16 +117,16 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
                 <Card key={i}>
                   <CardContent className="pt-4 pb-3 space-y-2">
                     <p className="text-sm">
-                      <span className="text-destructive font-medium">❌ </span>
+                      <span className="text-destructive font-medium">Wrong: </span>
                       <span className="line-through opacity-70">{c.incorrect}</span>
                     </p>
                     <p className="text-sm">
-                      <span className="text-green-600 font-medium">✅ </span>
+                      <span className="text-green-600 font-medium">Correct: </span>
                       {c.correct}
                     </p>
-                    <p className="text-xs text-muted-foreground">📝 {c.explanation}</p>
+                    <p className="text-xs text-muted-foreground">{c.explanation}</p>
                     {c.pronunciation_tip && (
-                      <p className="text-xs text-primary">🗣️ {c.pronunciation_tip}</p>
+                      <p className="text-xs text-primary">Pronunciation: {c.pronunciation_tip}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -140,12 +143,19 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
                 <CardContent className="pb-3">
                   <ul className="space-y-1">
                     {summary.repeated_mistakes.map((m, i) => (
-                      <li key={i} className="text-sm text-muted-foreground">• {m}</li>
+                      <li key={i} className="text-sm text-muted-foreground">- {m}</li>
                     ))}
                   </ul>
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="smart" className="mt-3">
+            <SmartPractice
+              categories={summary.smart_practice || []}
+              onPracticeSentence={onPracticeQuestion}
+            />
           </TabsContent>
 
           <TabsContent value="improve" className="space-y-3 mt-3">
@@ -158,7 +168,7 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
               <CardContent className="pb-3">
                 <ul className="space-y-1.5">
                   {summary.improvement_areas.map((a, i) => (
-                    <li key={i} className="text-sm">🎯 {a}</li>
+                    <li key={i} className="text-sm">- {a}</li>
                   ))}
                 </ul>
               </CardContent>
@@ -173,7 +183,7 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
               <CardContent className="pb-3">
                 <ul className="space-y-1.5">
                   {summary.daily_tips.map((t, i) => (
-                    <li key={i} className="text-sm">💡 {t}</li>
+                    <li key={i} className="text-sm">- {t}</li>
                   ))}
                 </ul>
               </CardContent>
@@ -220,7 +230,7 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
               <CardContent className="pb-3">
                 <ul className="space-y-2">
                   {summary.speaking_tasks.map((t, i) => (
-                    <li key={i} className="text-sm bg-accent/50 rounded-lg p-3">🎤 {t}</li>
+                    <li key={i} className="text-sm bg-accent/50 rounded-lg p-3">{t}</li>
                   ))}
                 </ul>
               </CardContent>
@@ -231,7 +241,7 @@ const PerformanceSummary = ({ summary, duration, onBack, onNewSession, onPractic
         {/* Actions */}
         <div className="pb-6 space-y-3">
           <Button onClick={onNewSession} className="w-full rounded-2xl h-12 font-display font-bold">
-            Start New Session 🎙️
+            Start New Session
           </Button>
         </div>
       </div>

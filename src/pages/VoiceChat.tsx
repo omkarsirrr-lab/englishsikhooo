@@ -5,9 +5,10 @@ import { ArrowLeft, Mic, MicOff, MessageCircle, Volume2, VolumeX, Square } from 
 import AnimatedAvatar from "@/components/AnimatedAvatar";
 import VoiceWaveform from "@/components/VoiceWaveform";
 import PerformanceSummary, { type SessionSummary } from "@/components/PerformanceSummary";
+import LanguageSelector from "@/components/LanguageSelector";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
-import { streamChat, type Message } from "@/lib/chat";
+import { streamChat, type Message, type Language } from "@/lib/chat";
 import { toast } from "sonner";
 
 type Expression = "idle" | "speaking" | "happy" | "thinking" | "encouraging";
@@ -20,17 +21,24 @@ const VoiceChat = () => {
   const [userSubtitle, setUserSubtitle] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [language, setLanguage] = useState<Language>("english");
   const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const [summary, setSummary] = useState<SessionSummary | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const hasGreeted = useRef(false);
   const messagesRef = useRef<Message[]>([]);
+  const languageRef = useRef<Language>("english");
 
   const { isSpeaking, speak, stop: stopSpeech } = useTextToSpeech();
 
+  // Keep languageRef in sync
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
+
   const detectExpression = useCallback((text: string): Expression => {
     const lower = text.toLowerCase();
-    if (lower.includes("great") || lower.includes("awesome") || lower.includes("nice") || lower.includes("🎉") || lower.includes("👏"))
+    if (lower.includes("great") || lower.includes("awesome") || lower.includes("nice") || lower.includes("mast") || lower.includes("chhan"))
       return "happy";
     if (lower.includes("accha") || lower.includes("hmm") || lower.includes("interesting"))
       return "thinking";
@@ -47,6 +55,7 @@ const VoiceChat = () => {
 
       await streamChat({
         messages: allMessages,
+        language: languageRef.current,
         onDelta: (chunk) => {
           assistantSoFar += chunk;
           setSubtitle(assistantSoFar);
@@ -120,7 +129,6 @@ const VoiceChat = () => {
     }
   };
 
-  // End session and generate summary
   const handleEndTalking = async () => {
     stopListening();
     stopSpeech();
@@ -144,13 +152,11 @@ const VoiceChat = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
           },
-          body: JSON.stringify({ messages: messagesRef.current, duration_seconds: duration }),
+          body: JSON.stringify({ messages: messagesRef.current, duration_seconds: duration, language }),
         }
       );
 
-      if (!resp.ok) {
-        throw new Error("Failed to generate summary");
-      }
+      if (!resp.ok) throw new Error("Failed to generate summary");
 
       const data: SessionSummary = await resp.json();
       setSummary(data);
@@ -174,7 +180,6 @@ const VoiceChat = () => {
     setTimeout(() => {
       hasGreeted.current = true;
       if (topic) {
-        // Start with a user message about the topic so AI responds on-topic
         const userMsg: Message = { role: "user", content: topic };
         messagesRef.current = [userMsg];
         setMessages([userMsg]);
@@ -190,7 +195,6 @@ const VoiceChat = () => {
     handleNewSession(question);
   };
 
-  // Show summary screen
   if (summary) {
     const duration = sessionStartTime ? Math.floor((Date.now() - sessionStartTime) / 1000) : 0;
     return (
@@ -206,7 +210,6 @@ const VoiceChat = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b bg-card">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
@@ -215,6 +218,7 @@ const VoiceChat = () => {
           <h2 className="font-display font-bold text-base">Voice Mode</h2>
         </div>
         <div className="flex items-center gap-2">
+          <LanguageSelector language={language} onChange={setLanguage} />
           <Button
             variant="ghost"
             size="icon"
@@ -229,11 +233,9 @@ const VoiceChat = () => {
         </div>
       </header>
 
-      {/* Main area */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-6">
         <AnimatedAvatar expression={expression} />
 
-        {/* Loading overlay */}
         {isGeneratingSummary && (
           <div className="text-center space-y-2">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
@@ -241,7 +243,6 @@ const VoiceChat = () => {
           </div>
         )}
 
-        {/* Subtitles */}
         {!isGeneratingSummary && (
           <div className="w-full max-w-md space-y-3 text-center min-h-[120px]">
             {subtitle && (
@@ -262,7 +263,6 @@ const VoiceChat = () => {
         <VoiceWaveform active={isListening} />
       </div>
 
-      {/* Bottom controls */}
       <div className="flex justify-center items-center gap-4 pb-8 pt-2">
         {sttSupported ? (
           <>
@@ -281,7 +281,6 @@ const VoiceChat = () => {
               )}
             </button>
 
-            {/* End Talking button */}
             {messagesRef.current.some((m) => m.role === "user") && (
               <button
                 onClick={handleEndTalking}

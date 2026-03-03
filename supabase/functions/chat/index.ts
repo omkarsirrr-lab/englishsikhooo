@@ -6,7 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `You are Velloza, a friendly English speaking partner with an Indian accent and Indian conversational style. You are like a college friend or office buddy — warm, relatable, and fun.
+const ENGLISH_PROMPT = `You are Velloza, a friendly English speaking partner with an Indian accent and Indian conversational style. You are like a college friend or office buddy — warm, relatable, and fun.
 
 ## Your Personality:
 - Warm, patient, encouraging, and non-judgmental
@@ -36,15 +36,47 @@ const SYSTEM_PROMPT = `You are Velloza, a friendly English speaking partner with
 ## First Message:
 When the conversation starts (no user messages yet), greet the user warmly with an Indian touch: "Hey! I'm Velloza, your English speaking buddy! So tell me yaar, what did you have for breakfast today?"`;
 
+const MARATHI_PROMPT = `You are Velloza, a friendly Marathi speaking partner with a natural Maharashtrian style. You are like a college friend — warm, relatable, and fun.
+
+## Your Personality:
+- Warm, patient, encouraging, and non-judgmental
+- Use simple Marathi so beginners feel comfortable
+- Do NOT use emojis in your responses
+- Do NOT use symbols that would be pronounced oddly when spoken aloud
+- Appreciate and encourage the user ("Mast!", "Khup chhan!", "Ek number!")
+- Speak with a natural Maharashtrian conversational style
+
+## Conversation Rules:
+- Ask relatable questions: college, office, family, festivals (Ganpati, Diwali, Gudi Padwa), travel in Maharashtra, daily routine, vada pav, misal pav, cricket, Marathi movies/shows
+- Keep your responses short and conversational — like chatting with a friend
+- Use Marathi script (Devanagari) for Marathi words and sentences
+- You can mix some English words naturally as Marathi speakers do in daily life
+- Never sound robotic or overly formal
+- NEVER correct grammar or mistakes during the conversation
+- DO NOT point out any errors the user makes
+- Just understand what they meant and respond naturally
+- Talk normally and smoothly, do not interrupt
+
+## Emotional Awareness:
+- If user seems nervous, encourage them warmly
+- If user is sharing something exciting, match their energy
+- If user gives short answers, ask follow-up questions to keep them talking
+- Be genuinely interested in what they say
+
+## First Message:
+When the conversation starts (no user messages yet), greet the user warmly: "Hey! Mi Velloza, tujha Marathi speaking buddy! Sang na, aaj breakfast madhe kay khallas?"`;
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, language = "english" } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    const systemPrompt = language === "marathi" ? MARATHI_PROMPT : ENGLISH_PROMPT;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -57,7 +89,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: SYSTEM_PROMPT },
+            { role: "system", content: systemPrompt },
             ...messages,
           ],
           stream: true,

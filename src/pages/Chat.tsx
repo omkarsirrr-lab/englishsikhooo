@@ -5,7 +5,8 @@ import { ArrowLeft, Send } from "lucide-react";
 import samAvatar from "@/assets/sam-avatar.jpg";
 import ChatBubble from "@/components/ChatBubble";
 import TypingIndicator from "@/components/TypingIndicator";
-import { streamChat, type Message } from "@/lib/chat";
+import LanguageSelector from "@/components/LanguageSelector";
+import { streamChat, type Message, type Language } from "@/lib/chat";
 import { toast } from "sonner";
 
 const Chat = () => {
@@ -13,9 +14,15 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [language, setLanguage] = useState<Language>("english");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const hasGreeted = useRef(false);
+  const languageRef = useRef<Language>("english");
+
+  useEffect(() => {
+    languageRef.current = language;
+  }, [language]);
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
@@ -27,7 +34,7 @@ const Chat = () => {
     scrollToBottom();
   }, [messages, isLoading, scrollToBottom]);
 
-  // Initial greeting from Sam
+  // Initial greeting
   useEffect(() => {
     if (hasGreeted.current) return;
     hasGreeted.current = true;
@@ -37,6 +44,7 @@ const Chat = () => {
 
     streamChat({
       messages: [],
+      language: languageRef.current,
       onDelta: (chunk) => {
         assistantSoFar += chunk;
         setMessages([{ role: "assistant", content: assistantSoFar }]);
@@ -75,6 +83,7 @@ const Chat = () => {
     try {
       await streamChat({
         messages: updatedMessages,
+        language: languageRef.current,
         onDelta: upsertAssistant,
         onDone: () => setIsLoading(false),
         onError: (err) => {
@@ -97,23 +106,22 @@ const Chat = () => {
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
       <header className="flex items-center gap-3 px-4 py-3 border-b bg-card">
         <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 flex-1">
           <div className="h-9 w-9 rounded-full overflow-hidden">
-            <img src={samAvatar} alt="Sam" className="w-full h-full object-cover" />
+            <img src={samAvatar} alt="Velloza" className="w-full h-full object-cover" />
           </div>
           <div>
             <h2 className="font-display font-bold text-base leading-tight">Velloza</h2>
-            <p className="text-xs text-muted-foreground">Your English buddy</p>
+            <p className="text-xs text-muted-foreground">Your speaking buddy</p>
           </div>
         </div>
+        <LanguageSelector language={language} onChange={setLanguage} />
       </header>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
         {messages.map((msg, i) => (
           <ChatBubble key={i} role={msg.role} content={msg.content} />
@@ -121,7 +129,6 @@ const Chat = () => {
         {isLoading && messages[messages.length - 1]?.role !== "assistant" && <TypingIndicator />}
       </div>
 
-      {/* Input */}
       <div className="border-t bg-card px-4 py-3">
         <div className="flex items-end gap-2 max-w-3xl mx-auto">
           <textarea
