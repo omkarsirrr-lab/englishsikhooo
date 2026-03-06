@@ -1,21 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Mic, Search } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Mic, Search, CheckCircle2 } from "lucide-react";
 import { categories, type WordCategory } from "@/data/dailyWordsData";
 import { Input } from "@/components/ui/input";
+
+const STORAGE_KEY = "velloza-practiced-categories";
+
+const getPracticedCategories = (): string[] => {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  } catch { return []; }
+};
 
 const DailyWords = () => {
   const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<WordCategory | null>(null);
   const [search, setSearch] = useState("");
+  const [practiced, setPracticed] = useState<string[]>(getPracticedCategories);
+
+  const markPracticed = useCallback((id: string) => {
+    setPracticed(prev => {
+      if (prev.includes(id)) return prev;
+      const next = [...prev, id];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const completionPct = Math.round((practiced.length / categories.length) * 100);
 
   const handlePracticeWithVoice = (category: WordCategory) => {
+    markPracticed(category.id);
     navigate("/voice", {
       state: { topic: `Practice ${category.label} sentences. Ask me questions related to ${category.label} situations and help me practice speaking.` },
     });
+  };
+
+  const handleCategorySelect = (cat: WordCategory) => {
+    markPracticed(cat.id);
+    setSelectedCategory(cat);
   };
 
   if (selectedCategory) {
@@ -36,6 +63,7 @@ const DailyWords = () => {
           <div className="flex-1">
             <h2 className="font-display font-bold text-base">
               {selectedCategory.icon} {selectedCategory.label}
+              {practiced.includes(selectedCategory.id) && <CheckCircle2 className="inline ml-1.5 h-4 w-4 text-primary" />}
             </h2>
             <p className="text-xs text-muted-foreground">{selectedCategory.words.length} sentences</p>
           </div>
@@ -87,23 +115,35 @@ const DailyWords = () => {
         </div>
       </header>
 
+      {/* Progress Tracker */}
+      <div className="px-4 py-3 border-b bg-card/50">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-medium text-muted-foreground">Practice Progress</span>
+          <span className="text-xs font-bold text-primary">{practiced.length}/{categories.length} categories • {completionPct}%</span>
+        </div>
+        <Progress value={completionPct} className="h-2" />
+      </div>
+
       <ScrollArea className="flex-1">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-4 max-w-3xl mx-auto">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat)}
-              className="flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent transition-colors text-center"
-            >
-              <span className="text-3xl">{cat.icon}</span>
-              <span className="text-sm font-medium">{cat.label}</span>
-              <span className="text-[11px] text-muted-foreground">{cat.words.length} sentences</span>
-            </button>
-          ))}
+          {categories.map((cat) => {
+            const done = practiced.includes(cat.id);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleCategorySelect(cat)}
+                className={`relative flex flex-col items-center gap-2 p-4 rounded-xl border bg-card hover:bg-accent transition-colors text-center ${done ? "border-primary/40 bg-primary/5" : ""}`}
+              >
+                {done && <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-primary" />}
+                <span className="text-3xl">{cat.icon}</span>
+                <span className="text-sm font-medium">{cat.label}</span>
+                <span className="text-[11px] text-muted-foreground">{cat.words.length} sentences</span>
+              </button>
+            );
+          })}
         </div>
       </ScrollArea>
     </div>
   );
 };
-
 export default DailyWords;
