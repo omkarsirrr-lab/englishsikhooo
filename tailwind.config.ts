@@ -147,6 +147,17 @@ export default {
           "30%": { transform: "scaleY(0.8) scaleX(0.95)" },
           "60%": { transform: "scaleY(0.6) scaleX(1.05)" },
         },
+        "mouth-explain": {
+          "0%, 100%": { transform: "scaleY(0.4) scaleX(1)" },
+          "20%": { transform: "scaleY(0.9) scaleX(0.9)" },
+          "40%": { transform: "scaleY(0.5) scaleX(1.05)" },
+          "60%": { transform: "scaleY(0.85) scaleX(0.92)" },
+          "80%": { transform: "scaleY(0.45) scaleX(1)" },
+        },
+        "mouth-think": {
+          "0%, 100%": { transform: "scaleY(0.6) scaleX(0.7)" },
+          "50%": { transform: "scaleY(0.8) scaleX(0.6)" },
+        },
         smile: {
           "0%, 100%": { transform: "scaleX(1) scaleY(1)" },
           "50%": { transform: "scaleX(1.05) scaleY(1.1)" },
