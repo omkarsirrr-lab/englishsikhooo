@@ -12,7 +12,7 @@ import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 import { streamChat, type Message, type Language } from "@/lib/chat";
 import { toast } from "sonner";
 
-type Expression = "idle" | "speaking" | "happy" | "thinking" | "encouraging";
+// Expression type imported from AnimatedAvatar
 
 const VoiceChat = () => {
   const navigate = useNavigate();
