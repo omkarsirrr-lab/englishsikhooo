@@ -195,6 +195,8 @@ export default {
         "eyebrow-raise": "eyebrow-raise 2.5s ease-in-out infinite",
         "lip-sync": "lip-sync 0.4s ease-in-out infinite",
         "mouth-subtle": "mouth-subtle 1.5s ease-in-out infinite",
+        "mouth-explain": "mouth-explain 0.8s ease-in-out infinite",
+        "mouth-think": "mouth-think 2s ease-in-out infinite",
         smile: "smile 3s ease-in-out infinite",
         "smile-wide": "smile-wide 2s ease-in-out infinite",
         "ring-pulse": "ring-pulse 2s ease-in-out infinite",
