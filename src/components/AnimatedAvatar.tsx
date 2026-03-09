@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import samAvatar from "@/assets/sam-avatar.jpg";
+import { useEffect, useState } from "react";
 
 export type Expression =
   | "idle"
@@ -16,138 +16,226 @@ interface AnimatedAvatarProps {
   className?: string;
 }
 
+/* ─── helpers ─── */
+function useBlinking() {
+  const [blink, setBlink] = useState(false);
+  useEffect(() => {
+    const loop = () => {
+      const next = 2500 + Math.random() * 3000;
+      setTimeout(() => {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 150);
+        loop();
+      }, next);
+    };
+    loop();
+  }, []);
+  return blink;
+}
+
+function useLipSync(active: boolean) {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    if (!active) { setFrame(0); return; }
+    const id = setInterval(() => setFrame((f) => (f + 1) % 4), 120);
+    return () => clearInterval(id);
+  }, [active]);
+  return frame;
+}
+
+/* ─── SVG face component ─── */
 const AnimatedAvatar = ({ expression, className }: AnimatedAvatarProps) => {
-  const isSpeaking = expression === "speaking";
-  const isHappy = expression === "happy" || expression === "appreciating";
+  const blink = useBlinking();
+  const isSpeaking = expression === "speaking" || expression === "explaining";
+  const lipFrame = useLipSync(isSpeaking);
+
+  // Derived booleans
+  const isHappy = expression === "happy";
+  const isAppreciating = expression === "appreciating";
   const isThinking = expression === "thinking";
   const isEncouraging = expression === "encouraging";
   const isExplaining = expression === "explaining";
   const isCorrecting = expression === "correcting";
-  const isAnimated = isSpeaking || isHappy || isThinking || isEncouraging || isExplaining || isCorrecting;
+  const isTalking = expression === "speaking";
+
+  /* ─── Eye config ─── */
+  const eyeOpenH = blink ? 1 : (() => {
+    if (isHappy || isAppreciating || isEncouraging) return 11; // wide bright eyes
+    if (isThinking) return 8;
+    return 10;
+  })();
+  const eyeRy = blink ? 0.5 : eyeOpenH / 2;
+
+  /* ─── Eyebrow config ─── */
+  const browOffsetY = (() => {
+    if (isThinking) return -3; // raised
+    if (isAppreciating || isHappy) return -1.5;
+    if (isCorrecting) return -1;
+    return 0;
+  })();
+  const browTilt = (() => {
+    if (isThinking) return -4; // one brow up
+    if (isCorrecting) return -2;
+    return 0;
+  })();
+
+  /* ─── Mouth config ─── */
+  const mouthPath = (() => {
+    if (isTalking) {
+      // 4-frame lip sync
+      const frames = [
+        "M 38 72 Q 50 75 62 72", // slightly open
+        "M 36 71 Q 50 82 64 71", // wide open
+        "M 39 72 Q 50 77 61 72", // medium
+        "M 40 73 Q 50 74 60 73", // nearly closed
+      ];
+      return frames[lipFrame];
+    }
+    if (isExplaining) {
+      const frames = [
+        "M 39 72 Q 50 76 61 72",
+        "M 38 72 Q 50 78 62 72",
+        "M 40 72 Q 50 75 60 72",
+        "M 39 73 Q 50 74 61 73",
+      ];
+      return frames[lipFrame];
+    }
+    if (isHappy || isEncouraging) return "M 36 70 Q 50 82 64 70"; // smile
+    if (isAppreciating) return "M 34 69 Q 50 85 66 69"; // big smile
+    if (isThinking) return "M 43 73 Q 50 75 57 73"; // small O
+    if (isCorrecting) return "M 40 71 Q 50 76 60 71"; // gentle
+    return "M 40 72 Q 50 74 60 72"; // neutral idle
+  })();
+
+  const mouthFill = (() => {
+    if (isTalking || isExplaining) return lipFrame === 1 ? "hsl(var(--foreground) / 0.12)" : "none";
+    if (isAppreciating) return "hsl(var(--foreground) / 0.06)";
+    return "none";
+  })();
+
+  /* ─── Head tilt ─── */
+  const headRotate = (() => {
+    if (isTalking) return "rotate(-1)";
+    if (isThinking) return "rotate(4)";
+    if (isExplaining) return "rotate(-3)";
+    if (isCorrecting) return "rotate(2)";
+    return "rotate(0)";
+  })();
+
+  // Cheek blush for happy/appreciating
+  const showBlush = isHappy || isAppreciating || isEncouraging;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
-      {/* Outer glow ring */}
+      {/* Glow ring */}
       <div
         className={cn(
-          "absolute inset-[-6px] rounded-full transition-all duration-700 blur-sm",
-          isSpeaking && "bg-primary/20 animate-pulse",
+          "absolute inset-[-8px] rounded-full transition-all duration-700 blur-md",
+          isTalking && "bg-primary/25 animate-pulse",
           isHappy && "bg-secondary/30",
-          isAppreciating(expression) && "bg-secondary/40 animate-pulse",
-          isThinking && "bg-accent/25 animate-avatar-think",
-          isEncouraging && "bg-primary/25",
+          isAppreciating && "bg-secondary/40 animate-pulse",
+          isThinking && "bg-accent/25",
+          isEncouraging && "bg-primary/30",
           isExplaining && "bg-muted/30",
           isCorrecting && "bg-accent/20"
         )}
       />
 
-      {/* Inner ring indicator */}
-      <div
+      <svg
+        viewBox="0 0 100 100"
         className={cn(
-          "absolute inset-[-3px] rounded-full transition-all duration-500",
-          isSpeaking && "ring-[3px] ring-primary/40 animate-ring-pulse",
-          isHappy && "ring-[3px] ring-secondary/50",
-          isAppreciating(expression) && "ring-[3px] ring-secondary/60",
-          isThinking && "ring-[3px] ring-accent/40",
-          isEncouraging && "ring-[3px] ring-primary/50",
-          isExplaining && "ring-[2px] ring-muted-foreground/20",
-          isCorrecting && "ring-[2px] ring-accent/40"
+          "w-48 h-48 md:w-64 md:h-64 drop-shadow-2xl transition-transform duration-700",
         )}
-      />
-
-      {/* Avatar container with head movement */}
-      <div
-        className={cn(
-          "relative w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-4 border-card shadow-2xl transition-transform duration-700",
-          isSpeaking && "animate-head-speak",
-          isHappy && "scale-105 animate-head-nod",
-          isThinking && "animate-head-tilt-right",
-          isEncouraging && "scale-105 animate-head-nod",
-          isExplaining && "animate-head-tilt-left",
-          isAppreciating(expression) && "scale-110 animate-head-nod",
-          isCorrecting && "animate-head-tilt-right"
-        )}
+        style={{ transform: headRotate }}
       >
-        <img
-          src={samAvatar}
-          alt="Velloza - AI English Companion"
-          className="w-full h-full object-cover"
+        {/* Face circle */}
+        <circle cx="50" cy="50" r="46" fill="hsl(30 60% 78%)" stroke="hsl(var(--card))" strokeWidth="3" />
+
+        {/* Hair — top */}
+        <ellipse cx="50" cy="22" rx="38" ry="20" fill="hsl(20 30% 18%)" />
+        <ellipse cx="50" cy="28" rx="40" ry="14" fill="hsl(20 30% 18%)" />
+        {/* Side hair */}
+        <ellipse cx="14" cy="45" rx="10" ry="22" fill="hsl(20 30% 18%)" />
+        <ellipse cx="86" cy="45" rx="10" ry="22" fill="hsl(20 30% 18%)" />
+
+        {/* Bindi */}
+        <circle cx="50" cy="36" r="1.5" fill="hsl(0 70% 50%)" />
+
+        {/* Eyebrows */}
+        <line
+          x1="32" y1={42 + browOffsetY} x2="43" y2={40 + browOffsetY + browTilt}
+          stroke="hsl(20 30% 22%)" strokeWidth="1.8" strokeLinecap="round"
+        />
+        <line
+          x1="57" y1={40 + browOffsetY} x2="68" y2={42 + browOffsetY}
+          stroke="hsl(20 30% 22%)" strokeWidth="1.8" strokeLinecap="round"
         />
 
-        {/* Natural eye blink overlay */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="animate-blink-natural absolute top-[32%] left-[28%] w-[14%] h-[5%] bg-card rounded-full opacity-0" />
-          <div className="animate-blink-natural absolute top-[32%] right-[28%] w-[14%] h-[5%] bg-card rounded-full opacity-0" />
-        </div>
-
-        {/* Bright / wide eyes for happy & appreciating */}
-        {(isHappy || isAppreciating(expression)) && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-[30%] left-[30%] w-[12%] h-[8%] rounded-full border-2 border-foreground/10 animate-eyes-bright" />
-            <div className="absolute top-[30%] right-[30%] w-[12%] h-[8%] rounded-full border-2 border-foreground/10 animate-eyes-bright" />
-          </div>
+        {/* Eyes */}
+        {/* Left eye */}
+        <ellipse
+          cx="37" cy="48" rx="5.5" ry={eyeRy}
+          fill="white" stroke="hsl(20 20% 30%)" strokeWidth="1"
+          className="transition-all duration-100"
+        />
+        {!blink && (
+          <>
+            <circle cx="37" cy="48" r="3" fill="hsl(20 40% 25%)" />
+            <circle cx="37" cy="48" r="1.8" fill="hsl(20 30% 10%)" />
+            <circle cx="35.5" cy="46.5" r="0.8" fill="white" opacity="0.8" />
+          </>
         )}
 
-        {/* Raised eyebrow for thinking / questioning */}
-        {isThinking && (
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute top-[26%] left-[28%] w-[14%] h-[3%] bg-foreground/8 rounded-full animate-eyebrow-raise" />
-            <div className="absolute top-[27%] right-[28%] w-[14%] h-[3%] bg-foreground/5 rounded-full" />
-          </div>
+        {/* Right eye */}
+        <ellipse
+          cx="63" cy="48" rx="5.5" ry={eyeRy}
+          fill="white" stroke="hsl(20 20% 30%)" strokeWidth="1"
+          className="transition-all duration-100"
+        />
+        {!blink && (
+          <>
+            <circle cx="63" cy="48" r="3" fill="hsl(20 40% 25%)" />
+            <circle cx="63" cy="48" r="1.8" fill="hsl(20 30% 10%)" />
+            <circle cx="61.5" cy="46.5" r="0.8" fill="white" opacity="0.8" />
+          </>
         )}
 
-        {/* Lip-sync mouth for speaking — opens & closes rapidly */}
-        {isSpeaking && (
-          <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
-            <div className="animate-lip-sync w-10 h-5 md:w-12 md:h-6 bg-foreground/20 rounded-[50%] shadow-inner" />
-          </div>
+        {/* Happy/appreciating eye sparkle */}
+        {(isHappy || isAppreciating) && !blink && (
+          <>
+            <circle cx="35" cy="46" r="1.2" fill="white" opacity="0.9" />
+            <circle cx="61" cy="46" r="1.2" fill="white" opacity="0.9" />
+          </>
         )}
 
-        {/* Big open smile for happy */}
-        {isHappy && !isAppreciating(expression) && (
-          <div className="absolute bottom-[19%] left-1/2 -translate-x-1/2">
-            <div className="w-12 h-6 md:w-14 md:h-7 border-b-[3px] border-foreground/20 rounded-b-full animate-smile" />
-          </div>
+        {/* Nose */}
+        <path d="M 48 55 Q 50 59 52 55" fill="none" stroke="hsl(20 30% 55%)" strokeWidth="1" />
+
+        {/* Cheek blush */}
+        {showBlush && (
+          <>
+            <ellipse cx="28" cy="58" rx="6" ry="3.5" fill="hsl(0 60% 75%)" opacity="0.35" />
+            <ellipse cx="72" cy="58" rx="6" ry="3.5" fill="hsl(0 60% 75%)" opacity="0.35" />
+          </>
         )}
 
-        {/* Wide toothy smile for appreciating */}
-        {isAppreciating(expression) && (
-          <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2">
-            <div className="w-14 h-7 md:w-16 md:h-8 bg-foreground/10 border-b-[3px] border-foreground/20 rounded-b-full animate-smile-wide" />
-          </div>
-        )}
+        {/* Mouth */}
+        <path
+          d={mouthPath}
+          fill={mouthFill}
+          stroke="hsl(0 40% 45%)"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          className="transition-all duration-100"
+        />
 
-        {/* Encouraging — gentle smile with slight movement */}
-        {isEncouraging && (
-          <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2">
-            <div className="w-10 h-5 md:w-12 md:h-6 border-b-[3px] border-foreground/15 rounded-b-full animate-smile" />
-          </div>
-        )}
-
-        {/* Explaining — mouth moves slowly, like talking calmly */}
-        {isExplaining && (
-          <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
-            <div className="animate-mouth-explain w-8 h-3 md:w-10 md:h-4 bg-foreground/12 rounded-full" />
-          </div>
-        )}
-
-        {/* Thinking — small pursed lips */}
-        {isThinking && (
-          <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
-            <div className="animate-mouth-think w-5 h-3 md:w-6 md:h-4 bg-foreground/10 rounded-full" />
-          </div>
-        )}
-
-        {/* Correcting — calm supportive, small open mouth */}
-        {isCorrecting && (
-          <div className="absolute bottom-[21%] left-1/2 -translate-x-1/2">
-            <div className="w-7 h-3 md:w-9 md:h-4 bg-foreground/10 rounded-full animate-mouth-subtle" />
-          </div>
-        )}
-      </div>
+        {/* Earrings */}
+        <circle cx="11" cy="52" r="2" fill="hsl(45 80% 55%)" />
+        <circle cx="89" cy="52" r="2" fill="hsl(45 80% 55%)" />
+      </svg>
 
       {/* Speaking indicator dots */}
-      {isSpeaking && (
+      {isTalking && (
         <div className="absolute -bottom-6 flex gap-1.5">
           {[0, 1, 2].map((i) => (
             <div
@@ -159,8 +247,8 @@ const AnimatedAvatar = ({ expression, className }: AnimatedAvatarProps) => {
         </div>
       )}
 
-      {/* Encouraging sparkles */}
-      {(isEncouraging || isAppreciating(expression)) && (
+      {/* Sparkles for encouraging/appreciating */}
+      {(isEncouraging || isAppreciating) && (
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-2 right-4 w-2 h-2 bg-secondary rounded-full animate-sparkle" style={{ animationDelay: "0s" }} />
           <div className="absolute top-6 left-2 w-1.5 h-1.5 bg-primary rounded-full animate-sparkle" style={{ animationDelay: "0.3s" }} />
@@ -170,9 +258,5 @@ const AnimatedAvatar = ({ expression, className }: AnimatedAvatarProps) => {
     </div>
   );
 };
-
-function isAppreciating(expression: Expression): boolean {
-  return expression === "appreciating";
-}
 
 export default AnimatedAvatar;
