@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import type { Expression } from "@/components/AnimatedAvatar";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Mic, MicOff, MessageCircle, Volume2, VolumeX, Square } from "lucide-react";
@@ -11,7 +12,7 @@ import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 import { streamChat, type Message, type Language } from "@/lib/chat";
 import { toast } from "sonner";
 
-type Expression = "idle" | "speaking" | "happy" | "thinking" | "encouraging";
+// Expression type imported from AnimatedAvatar
 
 const VoiceChat = () => {
   const navigate = useNavigate();
@@ -38,11 +39,17 @@ const VoiceChat = () => {
 
   const detectExpression = useCallback((text: string): Expression => {
     const lower = text.toLowerCase();
+    if (lower.includes("great job") || lower.includes("well done") || lower.includes("excellent") || lower.includes("proud") || lower.includes("bahut accha"))
+      return "appreciating";
     if (lower.includes("great") || lower.includes("awesome") || lower.includes("nice") || lower.includes("mast") || lower.includes("chhan"))
       return "happy";
-    if (lower.includes("accha") || lower.includes("hmm") || lower.includes("interesting"))
+    if (lower.includes("let me explain") || lower.includes("for example") || lower.includes("means") || lower.includes("samjha") || lower.includes("matlab"))
+      return "explaining";
+    if (lower.includes("try again") || lower.includes("correct") || lower.includes("instead") || lower.includes("should be") || lower.includes("galti"))
+      return "correcting";
+    if (lower.includes("accha") || lower.includes("hmm") || lower.includes("interesting") || lower.includes("?"))
       return "thinking";
-    if (lower.includes("try") || lower.includes("keep") || lower.includes("encourage") || lower.includes("don't worry"))
+    if (lower.includes("keep") || lower.includes("encourage") || lower.includes("don't worry") || lower.includes("you can"))
       return "encouraging";
     return "speaking";
   }, []);
