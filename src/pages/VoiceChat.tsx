@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import type { Expression } from "@/components/AnimatedAvatar";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Mic, MicOff, MessageCircle, Volume2, VolumeX, Square } from "lucide-react";
