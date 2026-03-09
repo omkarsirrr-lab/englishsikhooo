@@ -96,38 +96,52 @@ const AnimatedAvatar = ({ expression, className }: AnimatedAvatarProps) => {
           </div>
         )}
 
-        {/* Lip-sync mouth animation for speaking */}
+        {/* Lip-sync mouth for speaking — opens & closes rapidly */}
         {isSpeaking && (
           <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
-            <div className="animate-lip-sync w-8 h-3 md:w-10 md:h-4 bg-foreground/15 rounded-full" />
+            <div className="animate-lip-sync w-10 h-5 md:w-12 md:h-6 bg-foreground/20 rounded-[50%] shadow-inner" />
           </div>
         )}
 
-        {/* Smile for happy / encouraging / appreciating */}
-        {(isHappy || isEncouraging || isAppreciating(expression)) && (
+        {/* Big open smile for happy */}
+        {isHappy && !isAppreciating(expression) && (
+          <div className="absolute bottom-[19%] left-1/2 -translate-x-1/2">
+            <div className="w-12 h-6 md:w-14 md:h-7 border-b-[3px] border-foreground/20 rounded-b-full animate-smile" />
+          </div>
+        )}
+
+        {/* Wide toothy smile for appreciating */}
+        {isAppreciating(expression) && (
+          <div className="absolute bottom-[18%] left-1/2 -translate-x-1/2">
+            <div className="w-14 h-7 md:w-16 md:h-8 bg-foreground/10 border-b-[3px] border-foreground/20 rounded-b-full animate-smile-wide" />
+          </div>
+        )}
+
+        {/* Encouraging — gentle smile with slight movement */}
+        {isEncouraging && (
           <div className="absolute bottom-[20%] left-1/2 -translate-x-1/2">
-            <div
-              className={cn(
-                "border-b-[3px] border-foreground/15 rounded-b-full transition-all duration-500",
-                isAppreciating(expression)
-                  ? "w-12 h-6 md:w-14 md:h-7 animate-smile-wide"
-                  : "w-10 h-5 md:w-12 md:h-6 animate-smile"
-              )}
-            />
+            <div className="w-10 h-5 md:w-12 md:h-6 border-b-[3px] border-foreground/15 rounded-b-full animate-smile" />
           </div>
         )}
 
-        {/* Neutral / slight mouth for explaining */}
+        {/* Explaining — mouth moves slowly, like talking calmly */}
         {isExplaining && (
           <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
-            <div className="animate-mouth-subtle w-6 h-2 md:w-8 md:h-3 bg-foreground/10 rounded-full" />
+            <div className="animate-mouth-explain w-8 h-3 md:w-10 md:h-4 bg-foreground/12 rounded-full" />
           </div>
         )}
 
-        {/* Calm supportive expression for correcting */}
+        {/* Thinking — small pursed lips */}
+        {isThinking && (
+          <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2">
+            <div className="animate-mouth-think w-5 h-3 md:w-6 md:h-4 bg-foreground/10 rounded-full" />
+          </div>
+        )}
+
+        {/* Correcting — calm supportive, small open mouth */}
         {isCorrecting && (
           <div className="absolute bottom-[21%] left-1/2 -translate-x-1/2">
-            <div className="w-8 h-3 md:w-10 md:h-4 border-b-2 border-foreground/10 rounded-b-full animate-smile" />
+            <div className="w-7 h-3 md:w-9 md:h-4 bg-foreground/10 rounded-full animate-mouth-subtle" />
           </div>
         )}
       </div>
