@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import VoiceChat from "./pages/VoiceChat";
 import DailyWords from "./pages/DailyWords";
+import Coach from "./pages/Coach";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/voice" element={<VoiceChat />} />
           <Route path="/daily-words" element={<DailyWords />} />
+          <Route path="/coach" element={<Coach />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
