@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, Sparkles } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Sparkles, Headphones } from "lucide-react";
 import { streamChat, type Message } from "@/lib/chat";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
@@ -15,14 +15,31 @@ const Coach = () => {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [voiceMode, setVoiceMode] = useState(false);
+  const voiceModeRef = useRef(false);
   const messagesRef = useRef<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasGreeted = useRef(false);
 
   const { speak, stop: stopSpeak, isSpeaking } = useTextToSpeech();
   const { isListening, start, stop, supported: sttSupported } = useSpeechToText(
-    (text) => setInput((prev) => (prev ? prev + " " + text : text))
+    (text) => {
+      if (voiceModeRef.current) {
+        // Auto-send in voice mode
+        const updated = [...messagesRef.current, { role: "user" as const, content: text }];
+        setMessages(updated);
+        messagesRef.current = updated;
+        setInput("");
+        send(updated);
+      } else {
+        setInput((prev) => (prev ? prev + " " + text : text));
+      }
+    }
   );
+
+  useEffect(() => {
+    voiceModeRef.current = voiceMode;
+  }, [voiceMode]);
 
   const send = useCallback(
     async (allMessages: Message[]) => {
@@ -42,6 +59,18 @@ const Coach = () => {
           messagesRef.current = updated;
           setStreaming("");
           setIsProcessing(false);
+          if (voiceModeRef.current && assistantSoFar) {
+            // Speak only the conversational parts: prefer Native Speaker, then strip markdown
+            const native = assistantSoFar.match(/\*\*Native Speaker Version:\*\*\s*([^\n]+)/i)?.[1]
+              ?.replace(/^["']|["']$/g, "");
+            const nextQ = assistantSoFar.match(/\*\*Next Question:\*\*\s*([^\n]+)/i)?.[1];
+            const toSpeak = native && nextQ ? `${native}. Next question: ${nextQ}` : assistantSoFar;
+            speak(toSpeak);
+            // Auto-restart listening after speaking ends
+            setTimeout(() => {
+              if (voiceModeRef.current && !isListening) start();
+            }, 600);
+          }
         },
         onError: (err) => {
           toast.error(err);
@@ -83,6 +112,18 @@ const Coach = () => {
     }
   };
 
+  const toggleVoiceMode = () => {
+    const next = !voiceMode;
+    setVoiceMode(next);
+    if (!next) {
+      stop();
+      stopSpeak();
+    } else {
+      stopSpeak();
+      if (!isListening) start();
+    }
+  };
+
   const speakSentence = (text: string) => {
     stopSpeak();
     speak(text);
@@ -113,7 +154,25 @@ const Coach = () => {
             <p className="text-[10px] text-muted-foreground">Think → Attempt → Learn → Improve</p>
           </div>
         </div>
+        <Button
+          variant={voiceMode ? "default" : "secondary"}
+          size="sm"
+          onClick={toggleVoiceMode}
+          disabled={!sttSupported}
+          className="h-9 gap-1.5"
+          title={voiceMode ? "Exit voice mode" : "Start voice mode"}
+        >
+          {voiceMode ? <VolumeX className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
+          <span className="text-xs">{voiceMode ? "Stop Voice" : "Voice Mode"}</span>
+        </Button>
       </header>
+
+      {voiceMode && (
+        <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center text-xs text-primary font-medium flex items-center justify-center gap-2">
+          <span className={`h-2 w-2 rounded-full ${isListening ? "bg-destructive animate-pulse" : isSpeaking ? "bg-primary animate-pulse" : "bg-muted-foreground"}`} />
+          {isListening ? "Listening... speak now" : isSpeaking ? "Velloza is speaking..." : "Voice mode active"}
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((m, i) => {
