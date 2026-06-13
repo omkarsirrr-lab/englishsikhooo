@@ -17,6 +17,7 @@ const Coach = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
   const voiceModeRef = useRef(false);
+  const sendRef = useRef<(msgs: Message[]) => void>(() => {});
   const messagesRef = useRef<Message[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const hasGreeted = useRef(false);
@@ -30,7 +31,7 @@ const Coach = () => {
         setMessages(updated);
         messagesRef.current = updated;
         setInput("");
-        send(updated);
+        sendRef.current(updated);
       } else {
         setInput((prev) => (prev ? prev + " " + text : text));
       }
@@ -81,6 +82,10 @@ const Coach = () => {
     },
     []
   );
+
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
 
   useEffect(() => {
     if (hasGreeted.current) return;
