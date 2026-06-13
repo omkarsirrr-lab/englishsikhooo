@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Sparkles, Heart, Mic, BookOpen } from "lucide-react";
+import { MessageCircle, Sparkles, Heart, Mic, BookOpen, GraduationCap } from "lucide-react";
 import samAvatar from "@/assets/sam-avatar.jpg";
 
 const Index = () => {
@@ -67,6 +67,15 @@ const Index = () => {
           >
             <BookOpen className="h-5 w-5 mr-2" />
             Daily Use Words
+          </Button>
+          <Button
+            onClick={() => navigate("/coach")}
+            size="lg"
+            variant="secondary"
+            className="w-full rounded-2xl h-14 text-base font-display font-bold"
+          >
+            <GraduationCap className="h-5 w-5 mr-2" />
+            Speaking Coach
           </Button>
         </div>
 
