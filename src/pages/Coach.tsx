@@ -2,12 +2,25 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Sparkles, Headphones } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Sparkles, Headphones, Briefcase, Coffee, GraduationCap, Building2, Plane, ShoppingBag, Hospital, MessageCircle } from "lucide-react";
 import { streamChat, type Message } from "@/lib/chat";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+type VoiceFlow = "coach" | "scenario";
+const SCENARIOS = [
+  { id: "Job Interview", label: "Interview", icon: Briefcase },
+  { id: "Cafe / Restaurant", label: "Cafe", icon: Coffee },
+  { id: "College Friends Hangout", label: "College", icon: GraduationCap },
+  { id: "Office Meeting", label: "Office", icon: Building2 },
+  { id: "Travel / Airport", label: "Travel", icon: Plane },
+  { id: "Shopping in a Mall", label: "Shopping", icon: ShoppingBag },
+  { id: "Hospital / Doctor visit", label: "Hospital", icon: Hospital },
+  { id: "Casual Daily Talk", label: "Daily Talk", icon: MessageCircle },
+];
 
 const Coach = () => {
   const navigate = useNavigate();
@@ -16,6 +29,11 @@ const Coach = () => {
   const [streaming, setStreaming] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [voiceFlow, setVoiceFlow] = useState<VoiceFlow>("coach");
+  const [scenario, setScenario] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const voiceFlowRef = useRef<VoiceFlow>("coach");
+  const scenarioRef = useRef<string | null>(null);
   const voiceModeRef = useRef(false);
   const sendRef = useRef<(msgs: Message[]) => void>(() => {});
   const messagesRef = useRef<Message[]>([]);
@@ -41,15 +59,19 @@ const Coach = () => {
   useEffect(() => {
     voiceModeRef.current = voiceMode;
   }, [voiceMode]);
+  useEffect(() => { voiceFlowRef.current = voiceFlow; }, [voiceFlow]);
+  useEffect(() => { scenarioRef.current = scenario; }, [scenario]);
 
   const send = useCallback(
     async (allMessages: Message[]) => {
       setIsProcessing(true);
       setStreaming("");
       let assistantSoFar = "";
+      const isScenario = voiceFlowRef.current === "scenario" && !!scenarioRef.current;
       await streamChat({
         messages: allMessages,
-        mode: "coach",
+        mode: isScenario ? "scenario" : "coach",
+        scenario: isScenario ? scenarioRef.current! : undefined,
         onDelta: (chunk) => {
           assistantSoFar += chunk;
           setStreaming(assistantSoFar);
@@ -61,11 +83,16 @@ const Coach = () => {
           setStreaming("");
           setIsProcessing(false);
           if (voiceModeRef.current && assistantSoFar) {
-            // Speak only the conversational parts: prefer Native Speaker, then strip markdown
-            const native = assistantSoFar.match(/\*\*Native Speaker Version:\*\*\s*([^\n]+)/i)?.[1]
-              ?.replace(/^["']|["']$/g, "");
-            const nextQ = assistantSoFar.match(/\*\*Next Question:\*\*\s*([^\n]+)/i)?.[1];
-            const toSpeak = native && nextQ ? `${native}. Next question: ${nextQ}` : assistantSoFar;
+            let toSpeak = assistantSoFar;
+            if (voiceFlowRef.current === "coach") {
+              const native = assistantSoFar.match(/\*\*Native Speaker Version:\*\*\s*([^\n]+)/i)?.[1]
+                ?.replace(/^["']|["']$/g, "");
+              const nextQ = assistantSoFar.match(/\*\*Next Question:\*\*\s*([^\n]+)/i)?.[1];
+              if (native && nextQ) toSpeak = `${native}. Next question: ${nextQ}`;
+            } else {
+              // Scenario: strip any stray markdown for clean TTS
+              toSpeak = assistantSoFar.replace(/[*_`#>]/g, "").trim();
+            }
             speak(toSpeak);
             // Auto-restart listening after speaking ends
             setTimeout(() => {
@@ -118,15 +145,31 @@ const Coach = () => {
   };
 
   const toggleVoiceMode = () => {
-    const next = !voiceMode;
-    setVoiceMode(next);
-    if (!next) {
+    if (voiceMode) {
+      setVoiceMode(false);
       stop();
       stopSpeak();
-    } else {
-      stopSpeak();
-      if (!isListening) start();
+      return;
     }
+    // Opening voice mode → ask user which flow
+    setPickerOpen(true);
+  };
+
+  const startVoiceFlow = (flow: VoiceFlow, scenarioId?: string) => {
+    stopSpeak();
+    setPickerOpen(false);
+    setVoiceFlow(flow);
+    voiceFlowRef.current = flow;
+    setScenario(scenarioId ?? null);
+    scenarioRef.current = scenarioId ?? null;
+    setVoiceMode(true);
+    voiceModeRef.current = true;
+    // Reset conversation so the new flow's greeting kicks in
+    setMessages([]);
+    messagesRef.current = [];
+    setStreaming("");
+    send([]);
+    setTimeout(() => { if (!isListening) start(); }, 400);
   };
 
   const speakSentence = (text: string) => {
@@ -176,8 +219,59 @@ const Coach = () => {
         <div className="bg-primary/10 border-b border-primary/20 px-4 py-2 text-center text-xs text-primary font-medium flex items-center justify-center gap-2">
           <span className={`h-2 w-2 rounded-full ${isListening ? "bg-destructive animate-pulse" : isSpeaking ? "bg-primary animate-pulse" : "bg-muted-foreground"}`} />
           {isListening ? "Listening... speak now" : isSpeaking ? "Velloza is speaking..." : "Voice mode active"}
+          {voiceFlow === "scenario" && scenario && (
+            <span className="ml-2 px-2 py-0.5 rounded-full bg-primary/20 text-[10px]">{scenario}</span>
+          )}
         </div>
       )}
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Choose Voice Mode</DialogTitle>
+            <DialogDescription>Pick how you want to practice speaking today.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> 1. Roleplay a real-life scene
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Pick an event — Velloza will start the conversation in that scene and you reply by voice.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {SCENARIOS.map((s) => {
+                  const Icon = s.icon;
+                  return (
+                    <Button
+                      key={s.id}
+                      variant="outline"
+                      className="h-auto py-3 flex flex-col gap-1 items-center"
+                      onClick={() => startVoiceFlow("scenario", s.id)}
+                    >
+                      <Icon className="h-5 w-5 text-primary" />
+                      <span className="text-xs">{s.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-3 border-t">
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Headphones className="h-4 w-4 text-primary" /> 2. Ask in Hindi → Try in English
+              </h4>
+              <p className="text-xs text-muted-foreground mb-3">
+                Speak your question in any language. Velloza will first ask you to try it in English, then coach you.
+              </p>
+              <Button className="w-full" onClick={() => startVoiceFlow("coach")}>
+                <Mic className="h-4 w-4 mr-2" /> Start Coach Voice Mode
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
         {messages.map((m, i) => {
