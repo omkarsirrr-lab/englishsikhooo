@@ -36,25 +36,36 @@ export function useTextToSpeech(): UseTTSReturn {
 
       if (!cleanText) return;
 
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-      utterance.lang = "en-US";
-      utterance.rate = 0.95;
-      utterance.pitch = 1.1;
+      // Detect script to pick a sensible language tag (default Indian English)
+      const isDevanagari = /[\u0900-\u097F]/.test(cleanText);
+      const targetLang = isDevanagari ? "mr-IN" : "en-IN";
 
-      // Try to pick an Indian English voice first, then fall back
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = targetLang;
+      utterance.rate = 0.92;
+      utterance.pitch = 1.05;
+
+      // Strictly prefer Indian voices for an authentic Indian accent
       const voices = window.speechSynthesis.getVoices();
+      const indianNameHints = ["Indian", "India", "Heera", "Ravi", "Rishi", "Aditi", "Veena", "Lekha", "Neerja", "Priya", "Kalpana", "Hemant", "Madhur"];
+      const isIndianVoice = (v: SpeechSynthesisVoice) =>
+        v.lang === targetLang ||
+        v.lang === "en-IN" ||
+        v.lang === "hi-IN" ||
+        v.lang === "mr-IN" ||
+        indianNameHints.some((h) => v.name.includes(h));
+
       const preferred =
-        voices.find(
-          (v) => v.lang === "en-IN"
-        ) ||
-        voices.find(
-          (v) =>
-            v.lang.startsWith("en") &&
-            (v.name.includes("Female") ||
-              v.name.includes("Samantha") ||
-              v.name.includes("Google US English") ||
-              v.name.includes("Microsoft Zira"))
-        );
+        // Exact language + Indian name (best match)
+        voices.find((v) => v.lang === targetLang && indianNameHints.some((h) => v.name.includes(h))) ||
+        // Exact language match
+        voices.find((v) => v.lang === targetLang) ||
+        // For Marathi text, fall back to Hindi voice (closest Indian accent)
+        (isDevanagari ? voices.find((v) => v.lang === "hi-IN") : undefined) ||
+        // For English text, fall back to en-IN
+        (!isDevanagari ? voices.find((v) => v.lang === "en-IN") : undefined) ||
+        // Any voice that sounds Indian by name
+        voices.find(isIndianVoice);
       if (preferred) utterance.voice = preferred;
 
       utterance.onstart = () => setIsSpeaking(true);
