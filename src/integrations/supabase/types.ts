@@ -27,6 +27,7 @@ export type Database = {
           pronunciation_issues: number | null
           session_date: string
           summary_json: Json | null
+          user_id: string | null
           vocabulary_level: string | null
         }
         Insert: {
@@ -41,6 +42,7 @@ export type Database = {
           pronunciation_issues?: number | null
           session_date?: string
           summary_json?: Json | null
+          user_id?: string | null
           vocabulary_level?: string | null
         }
         Update: {
@@ -55,6 +57,7 @@ export type Database = {
           pronunciation_issues?: number | null
           session_date?: string
           summary_json?: Json | null
+          user_id?: string | null
           vocabulary_level?: string | null
         }
         Relationships: []
