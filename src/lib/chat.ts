@@ -1,6 +1,6 @@
 export type Message = { role: "user" | "assistant"; content: string };
 export type Language = "english" | "marathi";
-export type ChatMode = "chat" | "coach";
+export type ChatMode = "chat" | "coach" | "scenario";
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
@@ -8,6 +8,7 @@ export async function streamChat({
   messages,
   language = "english",
   mode = "chat",
+  scenario,
   onDelta,
   onDone,
   onError,
@@ -15,6 +16,7 @@ export async function streamChat({
   messages: Message[];
   language?: Language;
   mode?: ChatMode;
+  scenario?: string;
   onDelta: (text: string) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -25,7 +27,7 @@ export async function streamChat({
       "Content-Type": "application/json",
       Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
     },
-    body: JSON.stringify({ messages, language, mode }),
+    body: JSON.stringify({ messages, language, mode, scenario }),
   });
 
   if (!resp.ok) {
