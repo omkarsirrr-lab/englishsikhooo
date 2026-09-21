@@ -41,10 +41,15 @@ const Coach = () => {
   const hasGreeted = useRef(false);
 
   const { speak, stop: stopSpeak, isSpeaking } = useTextToSpeech();
+  const busyRef = useRef(false);
+  const stopRef = useRef<() => void>(() => {});
   const { isListening, start, stop, supported: sttSupported } = useSpeechToText(
     (text) => {
       if (voiceModeRef.current) {
-        // Auto-send in voice mode
+        // Ignore anything captured while Velloza is talking or thinking
+        if (busyRef.current) return;
+        busyRef.current = true;
+        stopRef.current();
         const updated = [...messagesRef.current, { role: "user" as const, content: text }];
         setMessages(updated);
         messagesRef.current = updated;
@@ -55,6 +60,8 @@ const Coach = () => {
       }
     }
   );
+
+  useEffect(() => { stopRef.current = stop; }, [stop]);
 
   useEffect(() => {
     voiceModeRef.current = voiceMode;
