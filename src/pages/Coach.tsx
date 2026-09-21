@@ -186,8 +186,8 @@ const Coach = () => {
     setMessages([]);
     messagesRef.current = [];
     setStreaming("");
+    // Greeting will be spoken first; the mic opens automatically right after it ends
     send([]);
-    setTimeout(() => { if (!isListening) start(); }, 400);
   };
 
   const speakSentence = (text: string) => {
