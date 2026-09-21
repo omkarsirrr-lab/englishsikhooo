@@ -61,7 +61,9 @@ const Coach = () => {
     }
   );
 
+  const startRef = useRef<() => void>(() => {});
   useEffect(() => { stopRef.current = stop; }, [stop]);
+  useEffect(() => { startRef.current = start; }, [start]);
 
   useEffect(() => {
     voiceModeRef.current = voiceMode;
