@@ -37,7 +37,10 @@ export function useTextToSpeech(): UseTTSReturn {
         .replace(/\[.*?\]\(.*?\)/g, "")
         .trim();
 
-      if (!cleanText) return;
+      if (!cleanText) {
+        onEnd?.();
+        return;
+      }
 
       // Detect script to pick a sensible language tag (default Indian English)
       const isDevanagari = /[\u0900-\u097F]/.test(cleanText);
