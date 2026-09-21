@@ -74,9 +74,17 @@ export function useTextToSpeech(): UseTTSReturn {
         voices.find(isIndianVoice);
       if (preferred) utterance.voice = preferred;
 
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        setIsSpeaking(false);
+        onEnd?.();
+      };
+
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = finish;
+      utterance.onerror = finish;
 
       utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);
