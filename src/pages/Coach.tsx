@@ -100,17 +100,25 @@ const Coach = () => {
               // Scenario: strip any stray markdown for clean TTS
               toSpeak = assistantSoFar.replace(/[*_`#>]/g, "").trim();
             }
-            speak(toSpeak);
-            // Auto-restart listening after speaking ends
-            setTimeout(() => {
-              if (voiceModeRef.current && !isListening) start();
-            }, 600);
+            // Mic stays closed while Velloza speaks, then reopens once — no flicker
+            stopRef.current();
+            speak(toSpeak, () => {
+              busyRef.current = false;
+              if (!voiceModeRef.current) return;
+              window.setTimeout(() => {
+                if (voiceModeRef.current) startRef.current();
+              }, 350);
+            });
+          } else {
+            busyRef.current = false;
           }
         },
         onError: (err) => {
           toast.error(err);
           setIsProcessing(false);
           setStreaming("");
+          busyRef.current = false;
+          if (voiceModeRef.current) startRef.current();
         },
       });
     },
