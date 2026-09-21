@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 interface UseTTSReturn {
   isSpeaking: boolean;
-  speak: (text: string) => void;
+  speak: (text: string, onEnd?: () => void) => void;
   stop: () => void;
   supported: boolean;
 }
