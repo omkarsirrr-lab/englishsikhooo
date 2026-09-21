@@ -73,6 +73,7 @@ const Coach = () => {
 
   const send = useCallback(
     async (allMessages: Message[]) => {
+      busyRef.current = true;
       setIsProcessing(true);
       setStreaming("");
       let assistantSoFar = "";
