@@ -165,6 +165,8 @@ const Coach = () => {
   const toggleVoiceMode = () => {
     if (voiceMode) {
       setVoiceMode(false);
+      voiceModeRef.current = false;
+      busyRef.current = false;
       stop();
       stopSpeak();
       return;
