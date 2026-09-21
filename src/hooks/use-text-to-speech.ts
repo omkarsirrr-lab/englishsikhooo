@@ -20,8 +20,11 @@ export function useTextToSpeech(): UseTTSReturn {
   }, [supported]);
 
   const speak = useCallback(
-    (text: string) => {
-      if (!supported) return;
+    (text: string, onEnd?: () => void) => {
+      if (!supported) {
+        onEnd?.();
+        return;
+      }
       stop();
 
       // Strip markdown formatting for cleaner speech
