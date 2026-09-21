@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 interface UseTTSReturn {
   isSpeaking: boolean;
-  speak: (text: string) => void;
+  speak: (text: string, onEnd?: () => void) => void;
   stop: () => void;
   supported: boolean;
 }
@@ -20,8 +20,11 @@ export function useTextToSpeech(): UseTTSReturn {
   }, [supported]);
 
   const speak = useCallback(
-    (text: string) => {
-      if (!supported) return;
+    (text: string, onEnd?: () => void) => {
+      if (!supported) {
+        onEnd?.();
+        return;
+      }
       stop();
 
       // Strip markdown formatting for cleaner speech
@@ -34,7 +37,10 @@ export function useTextToSpeech(): UseTTSReturn {
         .replace(/\[.*?\]\(.*?\)/g, "")
         .trim();
 
-      if (!cleanText) return;
+      if (!cleanText) {
+        onEnd?.();
+        return;
+      }
 
       // Detect script to pick a sensible language tag (default Indian English)
       const isDevanagari = /[\u0900-\u097F]/.test(cleanText);
@@ -68,9 +74,17 @@ export function useTextToSpeech(): UseTTSReturn {
         voices.find(isIndianVoice);
       if (preferred) utterance.voice = preferred;
 
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        setIsSpeaking(false);
+        onEnd?.();
+      };
+
       utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onend = finish;
+      utterance.onerror = finish;
 
       utteranceRef.current = utterance;
       window.speechSynthesis.speak(utterance);

@@ -41,10 +41,15 @@ const Coach = () => {
   const hasGreeted = useRef(false);
 
   const { speak, stop: stopSpeak, isSpeaking } = useTextToSpeech();
+  const busyRef = useRef(false);
+  const stopRef = useRef<() => void>(() => {});
   const { isListening, start, stop, supported: sttSupported } = useSpeechToText(
     (text) => {
       if (voiceModeRef.current) {
-        // Auto-send in voice mode
+        // Ignore anything captured while Velloza is talking or thinking
+        if (busyRef.current) return;
+        busyRef.current = true;
+        stopRef.current();
         const updated = [...messagesRef.current, { role: "user" as const, content: text }];
         setMessages(updated);
         messagesRef.current = updated;
@@ -56,6 +61,10 @@ const Coach = () => {
     }
   );
 
+  const startRef = useRef<() => void>(() => {});
+  useEffect(() => { stopRef.current = stop; }, [stop]);
+  useEffect(() => { startRef.current = start; }, [start]);
+
   useEffect(() => {
     voiceModeRef.current = voiceMode;
   }, [voiceMode]);
@@ -64,6 +73,7 @@ const Coach = () => {
 
   const send = useCallback(
     async (allMessages: Message[]) => {
+      busyRef.current = true;
       setIsProcessing(true);
       setStreaming("");
       let assistantSoFar = "";
@@ -93,17 +103,25 @@ const Coach = () => {
               // Scenario: strip any stray markdown for clean TTS
               toSpeak = assistantSoFar.replace(/[*_`#>]/g, "").trim();
             }
-            speak(toSpeak);
-            // Auto-restart listening after speaking ends
-            setTimeout(() => {
-              if (voiceModeRef.current && !isListening) start();
-            }, 600);
+            // Mic stays closed while Velloza speaks, then reopens once — no flicker
+            stopRef.current();
+            speak(toSpeak, () => {
+              busyRef.current = false;
+              if (!voiceModeRef.current) return;
+              window.setTimeout(() => {
+                if (voiceModeRef.current) startRef.current();
+              }, 350);
+            });
+          } else {
+            busyRef.current = false;
           }
         },
         onError: (err) => {
           toast.error(err);
           setIsProcessing(false);
           setStreaming("");
+          busyRef.current = false;
+          if (voiceModeRef.current) startRef.current();
         },
       });
     },
@@ -147,6 +165,8 @@ const Coach = () => {
   const toggleVoiceMode = () => {
     if (voiceMode) {
       setVoiceMode(false);
+      voiceModeRef.current = false;
+      busyRef.current = false;
       stop();
       stopSpeak();
       return;
@@ -168,8 +188,8 @@ const Coach = () => {
     setMessages([]);
     messagesRef.current = [];
     setStreaming("");
+    // Greeting will be spoken first; the mic opens automatically right after it ends
     send([]);
-    setTimeout(() => { if (!isListening) start(); }, 400);
   };
 
   const speakSentence = (text: string) => {
